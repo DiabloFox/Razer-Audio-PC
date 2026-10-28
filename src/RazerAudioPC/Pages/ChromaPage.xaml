@@ -1,0 +1,31 @@
+<UserControl x:Class="RazerAudioPC.Pages.ChromaPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:RazerAudioPC.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,12">
+                <c:Earbud Width="66" Height="112" Margin="0,0,30,0" GlowColor="{Binding ChromaColor}" IsLit="{Binding ChromaOn}" />
+                <c:Earbud Width="66" Height="112" IsRight="True" GlowColor="{Binding ChromaColor}" IsLit="{Binding ChromaOn}" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="EFFECT" />
+            <StackPanel x:Name="EffectList" />
+
+            <StackPanel x:Name="ColorSection">
+                <TextBlock Style="{StaticResource SectionHeader}" Text="COLOR" />
+                <WrapPanel x:Name="Swatches" Margin="16,0,16,0" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="BRIGHTNESS" />
+            <Border Background="{StaticResource CardBg}" Padding="20,10">
+                <DockPanel>
+                    <TextBlock x:Name="BrightnessText" DockPanel.Dock="Right" Width="44" TextAlignment="Right" FontSize="12"
+                               VerticalAlignment="Center" Foreground="{StaticResource RazerGreen}" />
+                    <Slider x:Name="BrightnessSlider" Style="{StaticResource RazerSlider}" Minimum="0" Maximum="255"
+                            ValueChanged="Brightness_ValueChanged" PreviewMouseUp="Brightness_Commit" KeyUp="Brightness_Commit" />
+                </DockPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

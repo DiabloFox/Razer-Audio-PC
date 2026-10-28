@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using Windows.Devices.Bluetooth;
-using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Devices.Enumeration;
 using Windows.Storage.Streams;
 
 namespace RazerAudioPC.Bluetooth;
@@ -24,74 +22,6 @@ public sealed class BleConnection : IDisposable
     public string Name => _device?.Name ?? "";
     public bool IsConnected => _device?.ConnectionStatus == BluetoothConnectionStatus.Connected && _write != null;
 
-    /// <summary>
-    /// Finds candidate earbud BLE addresses: devices Windows already knows (paired LE or
-    /// classic with the same address) whose name matches, then live advertisements that
-    /// carry the Razer service.
-    /// </summary>
-    public static async Task<List<ulong>> FindCandidatesAsync(string nameFragment, Guid scanService, TimeSpan scanTime, CancellationToken ct)
-    {
-        var found = new List<ulong>();
-
-        foreach (var selector in new[]
-                 {
-                     BluetoothLEDevice.GetDeviceSelectorFromPairingState(true),
-                     BluetoothDevice.GetDeviceSelectorFromPairingState(true),
-                 })
-        {
-            try
-            {
-                var infos = await DeviceInformation.FindAllAsync(selector);
-                foreach (var info in infos.Where(i => i.Name.Contains(nameFragment, StringComparison.OrdinalIgnoreCase)))
-                {
-                    ulong addr = await AddressOf(info);
-                    if (addr != 0 && !found.Contains(addr)) found.Add(addr);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[BLE] enumerate failed: {ex.Message}");
-            }
-        }
-
-        // Live scan: the buds advertise the Razer service while connected to a phone/PC.
-        var watcher = new BluetoothLEAdvertisementWatcher { ScanningMode = BluetoothLEScanningMode.Active };
-        var tcs = new TaskCompletionSource();
-        watcher.Received += (_, args) =>
-        {
-            bool match = args.Advertisement.ServiceUuids.Contains(scanService)
-                         || (args.Advertisement.LocalName?.Contains(nameFragment, StringComparison.OrdinalIgnoreCase) ?? false);
-            if (!match) return;
-            lock (found)
-            {
-                if (!found.Contains(args.BluetoothAddress)) found.Add(args.BluetoothAddress);
-            }
-        };
-        watcher.Start();
-        try { await Task.Delay(scanTime, ct); }
-        catch (OperationCanceledException) { }
-        watcher.Stop();
-
-        lock (found) return found.ToList();
-    }
-
-    private static async Task<ulong> AddressOf(DeviceInformation info)
-    {
-        try
-        {
-            using var le = await BluetoothLEDevice.FromIdAsync(info.Id);
-            if (le != null) return le.BluetoothAddress;
-        }
-        catch { /* not an LE id */ }
-        try
-        {
-            using var bt = await BluetoothDevice.FromIdAsync(info.Id);
-            if (bt != null) return bt.BluetoothAddress;
-        }
-        catch { /* ignore */ }
-        return 0;
-    }
-
     /// <summary>Opens the GATT service and characteristics on the device at <paramref name="address"/>.</summary>
     public async Task<bool> ConnectAsync(ulong address, Guid service, Guid writeChar, Guid notifyChar)
     {
@@ -99,26 +29,45 @@ public sealed class BleConnection : IDisposable
         try
         {
             _device = await BluetoothLEDevice.FromBluetoothAddressAsync(address);
-            if (_device == null) return false;
+            if (_device == null)
+            {
+                BleLog.Write($"[BLE] {address:X12}: no LE device at this address");
+                return false;
+            }
+            BleLog.Write($"[BLE] {address:X12}: '{_device.Name}' status={_device.ConnectionStatus}");
 
             var services = await _device.GetGattServicesForUuidAsync(service, BluetoothCacheMode.Uncached);
+            if (services.Status is GattCommunicationStatus.AccessDenied or GattCommunicationStatus.ProtocolError
+                && !_device.DeviceInformation.Pairing.IsPaired && _device.DeviceInformation.Pairing.CanPair)
+            {
+                // The official app bonds the LE link (requirePair); do the same once.
+                var custom = _device.DeviceInformation.Pairing.Custom;
+                custom.PairingRequested += (_, a) => a.Accept();
+                var pair = await custom.PairAsync(Windows.Devices.Enumeration.DevicePairingKinds.ConfirmOnly
+                                                  | Windows.Devices.Enumeration.DevicePairingKinds.ConfirmPinMatch,
+                                                  Windows.Devices.Enumeration.DevicePairingProtectionLevel.Encryption);
+                BleLog.Write($"[BLE] {address:X12}: pairing {pair.Status}");
+                services = await _device.GetGattServicesForUuidAsync(service, BluetoothCacheMode.Uncached);
+            }
             if (services.Status != GattCommunicationStatus.Success || services.Services.Count == 0)
             {
-                Debug.WriteLine($"[BLE] {address:X12}: service {service} not found ({services.Status})");
+                BleLog.Write($"[BLE] {address:X12}: service {service} not found ({services.Status})");
+                var all = await _device.GetGattServicesAsync(BluetoothCacheMode.Uncached);
+                BleLog.Write($"[BLE] all services ({all.Status}): {string.Join(", ", all.Services.Select(s => s.Uuid))}");
                 Dispose();
                 return false;
             }
 
             var svc = services.Services[0];
             var access = await svc.RequestAccessAsync();
-            Debug.WriteLine($"[BLE] access: {access}");
+            BleLog.Write($"[BLE] access: {access}");
 
             var w = await svc.GetCharacteristicsForUuidAsync(writeChar, BluetoothCacheMode.Uncached);
             var r = await svc.GetCharacteristicsForUuidAsync(notifyChar, BluetoothCacheMode.Uncached);
             if (w.Status != GattCommunicationStatus.Success || w.Characteristics.Count == 0 ||
                 r.Status != GattCommunicationStatus.Success || r.Characteristics.Count == 0)
             {
-                Debug.WriteLine("[BLE] characteristics not found");
+                BleLog.Write("[BLE] characteristics not found");
                 Dispose();
                 return false;
             }
@@ -134,7 +83,7 @@ public sealed class BleConnection : IDisposable
             var status = await _notify.WriteClientCharacteristicConfigurationDescriptorAsync(cccd);
             if (status != GattCommunicationStatus.Success)
             {
-                Debug.WriteLine($"[BLE] CCCD write failed: {status}");
+                BleLog.Write($"[BLE] CCCD write failed: {status}");
                 Dispose();
                 return false;
             }
@@ -144,7 +93,7 @@ public sealed class BleConnection : IDisposable
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[BLE] connect failed: {ex}");
+            BleLog.Write($"[BLE] connect failed: {ex}");
             Dispose();
             return false;
         }
@@ -159,7 +108,7 @@ public sealed class BleConnection : IDisposable
         var writer = new DataWriter();
         writer.WriteBytes(data);
         var result = await ch.WriteValueWithResultAsync(writer.DetachBuffer(), option);
-        Debug.WriteLine($"[BLE] >> {Convert.ToHexString(data)} ({result.Status})");
+        BleLog.Write($"[BLE] >> {Convert.ToHexString(data)} ({result.Status})");
         return result.Status == GattCommunicationStatus.Success;
     }
 
@@ -168,7 +117,7 @@ public sealed class BleConnection : IDisposable
         var reader = DataReader.FromBuffer(args.CharacteristicValue);
         var bytes = new byte[reader.UnconsumedBufferLength];
         reader.ReadBytes(bytes);
-        Debug.WriteLine($"[BLE] << {Convert.ToHexString(bytes)}");
+        BleLog.Write($"[BLE] << {Convert.ToHexString(bytes)}");
         NotificationReceived?.Invoke(bytes);
     }
 

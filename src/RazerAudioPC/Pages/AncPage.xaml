@@ -1,0 +1,55 @@
+<UserControl x:Class="RazerAudioPC.Pages.AncPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <TextBlock Margin="20,6,20,14" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                       Text="Turn on ANC to control how much ambient noise is nullified or use ambient for a heightened sense of awareness." />
+
+            <RadioButton x:Name="OffRow" Style="{StaticResource OptionRow}" Content="Off" GroupName="anc" Click="Off_Click" />
+            <RadioButton x:Name="OnRow" Style="{StaticResource OptionRow}" Content="On" GroupName="anc" Click="On_Click" />
+
+            <Border x:Name="LevelPanel" Background="{StaticResource CardBg}" Padding="20,10,20,14">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock x:Name="LevelText" DockPanel.Dock="Right" FontSize="12" Foreground="{StaticResource RazerGreen}" />
+                        <TextBlock Text="ANC LEVEL" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" />
+                    </DockPanel>
+                    <Slider x:Name="LevelSlider" Style="{StaticResource RazerSlider}" Minimum="1" Maximum="10"
+                            IsSnapToTickEnabled="True" TickFrequency="1" SmallChange="1" LargeChange="1" Margin="0,6,0,0"
+                            ValueChanged="Level_ValueChanged" PreviewMouseUp="Level_Commit" KeyUp="Level_Commit" />
+                </StackPanel>
+            </Border>
+
+            <RadioButton x:Name="AmbientRow" Style="{StaticResource OptionRow}" Content="Ambient" GroupName="anc" Click="Ambient_Click" />
+
+            <TextBlock x:Name="WearHint" Margin="20,10,20,0" FontSize="12" Foreground="#E8A13A" TextWrapping="Wrap"
+                       Text="Put on both earbuds and ensure a comfortable fit." />
+
+            <!-- Fit test -->
+            <TextBlock Style="{StaticResource SectionHeader}" Text="EARBUD FIT TEST" Margin="20,28,20,8" />
+            <Border Background="{StaticResource CardBg}" Padding="20,14">
+                <StackPanel>
+                    <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondary}"
+                               Text="Check that your ear tips seal properly for the best noise cancellation. Put both earbuds in, stay quiet, and start the test." />
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="LEFT" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock x:Name="FitLeft" Text="—" FontSize="14" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                            <TextBlock Text="RIGHT" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{StaticResource TextSecondary}" />
+                            <TextBlock x:Name="FitRight" Text="—" FontSize="14" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+                    <Button x:Name="FitButton" Style="{StaticResource GreenButton}" Content="START FIT TEST" Margin="0,16,0,0"
+                            HorizontalAlignment="Center" Click="Fit_Click" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

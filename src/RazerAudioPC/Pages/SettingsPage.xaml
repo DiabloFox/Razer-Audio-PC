@@ -1,0 +1,68 @@
+<UserControl x:Class="RazerAudioPC.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,0,20">
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="DEVICE INFO" />
+            <Border Background="{StaticResource CardBg}" Padding="20,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="26" />
+                        <RowDefinition Height="26" />
+                        <RowDefinition MinHeight="26" Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Model" Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                    <TextBlock Grid.Column="1" Text="Hammerhead Pro HyperSpeed" FontSize="12" />
+                    <TextBlock Grid.Row="1" Text="Firmware" Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Firmware}" FontSize="12" />
+                    <TextBlock Grid.Row="2" Text="Updates" Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FirmwareStatus}" FontSize="12" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="3" Text="Earbuds (BLE)" Foreground="{StaticResource TextSecondary}" FontSize="12" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Addresses}" FontSize="12" TextWrapping="Wrap" />
+                </Grid>
+            </Border>
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="AUTO STANDBY" />
+            <TextBlock Margin="20,0,20,8" TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextSecondary}"
+                       Text="Turn the earbuds off when idle. (Supported by the firmware, but hidden in the mobile app.)" />
+            <StackPanel x:Name="TimeoutList" IsEnabled="{Binding IsConnected}" />
+
+            <TextBlock Style="{StaticResource SectionHeader}" Text="APP" />
+            <Border Background="{StaticResource CardBg}" Padding="20,10" Margin="0,0,0,1">
+                <DockPanel>
+                    <ToggleButton x:Name="StartupToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}" Click="Startup_Click" />
+                    <TextBlock Text="Start with Windows" FontSize="13" VerticalAlignment="Center" />
+                </DockPanel>
+            </Border>
+            <Border Background="{StaticResource CardBg}" Padding="20,10" Margin="0,0,0,1">
+                <DockPanel>
+                    <ToggleButton x:Name="TrayToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}" Click="Tray_Click" />
+                    <StackPanel>
+                        <TextBlock Text="Keep running in the tray" FontSize="13" />
+                        <TextBlock Text="Closing the window hides it next to the clock" FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Border Background="{StaticResource CardBg}" Padding="20,10" Margin="0,0,0,1">
+                <DockPanel>
+                    <ToggleButton x:Name="BatteryToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}" Click="Battery_Click" />
+                    <StackPanel>
+                        <TextBlock Text="Low battery alerts" FontSize="13" />
+                        <TextBlock Text="Notify when an earbud drops below 15%" FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                <Button Style="{StaticResource GreenButton}" Content="RECONNECT" Padding="20,8" Margin="0,0,10,0" Click="Reconnect_Click" />
+                <Button Style="{StaticResource PillButton}" Content="OPEN LOG" Padding="20,8" Click="Log_Click" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

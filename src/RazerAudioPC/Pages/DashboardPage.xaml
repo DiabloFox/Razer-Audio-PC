@@ -1,0 +1,175 @@
+<UserControl x:Class="RazerAudioPC.Pages.DashboardPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:RazerAudioPC.Controls">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="16,0,16,20">
+
+            <!-- Earbuds + batteries -->
+            <Grid Height="220" Margin="0,10,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,8,0,0">
+                    <c:Earbud Width="76" Height="130" Margin="0,0,24,0" IsRight="False"
+                              GlowColor="{Binding ChromaColor}" IsLit="{Binding ChromaOn}" />
+                    <c:Earbud Width="76" Height="130" IsRight="True"
+                              GlowColor="{Binding ChromaColor}" IsLit="{Binding ChromaOn}" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20"
+                            Visibility="{Binding IsConnected, Converter={StaticResource BoolToVis}}">
+                    <!-- Left -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,40,0">
+                        <TextBlock Text="{Binding BatteryLeft, Converter={StaticResource BatteryText}}" FontSize="13" VerticalAlignment="Center" />
+                        <Grid Width="22" Height="11" Margin="5,0,2,0" VerticalAlignment="Center">
+                            <Border BorderBrush="#666" BorderThickness="1" CornerRadius="2" />
+                            <Border HorizontalAlignment="Left" Margin="2" CornerRadius="1"
+                                    Width="{Binding BatteryLeft, Converter={StaticResource BatteryWidth}, ConverterParameter=18}"
+                                    Background="{Binding BatteryLeft, Converter={StaticResource BatteryBrush}}" />
+                        </Grid>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE945;" FontSize="10" Foreground="{StaticResource RazerGreen}"
+                                   Visibility="{Binding Charging, Converter={StaticResource BoolToVis}}" />
+                        <TextBlock Text="L" FontSize="13" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <!-- Right -->
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="R" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <Grid Width="22" Height="11" Margin="0,0,5,0" VerticalAlignment="Center">
+                            <Border BorderBrush="#666" BorderThickness="1" CornerRadius="2" />
+                            <Border HorizontalAlignment="Left" Margin="2" CornerRadius="1"
+                                    Width="{Binding BatteryRight, Converter={StaticResource BatteryWidth}, ConverterParameter=18}"
+                                    Background="{Binding BatteryRight, Converter={StaticResource BatteryBrush}}" />
+                        </Grid>
+                        <TextBlock Text="{Binding BatteryRight, Converter={StaticResource BatteryText}}" FontSize="13" VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Connection status -->
+                <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,8"
+                            Visibility="{Binding IsConnected, Converter={StaticResource InvBoolToVis}}">
+                    <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource TextSecondary}" FontSize="12"
+                               TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320" />
+                    <Button Style="{StaticResource GreenButton}" Content="RETRY" Margin="0,10,0,0" HorizontalAlignment="Center"
+                            Padding="22,6" Click="Retry_Click" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Feature cards -->
+            <StackPanel IsEnabled="{Binding IsConnected}">
+
+                <Button Style="{StaticResource CardButton}" Click="Equalizer_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE9E9;" Width="28" Margin="0,0,14,0" />
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE76C;" FontSize="12" Foreground="{StaticResource TextSecondary}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Equalizer" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding EqDescription}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="Anc_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE7F6;" Width="28" Margin="0,0,14,0" />
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE76C;" FontSize="12" Foreground="{StaticResource TextSecondary}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Active Noise Cancellation" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding AncDescription}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="Remap_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE7C9;" Width="28" Margin="0,0,14,0" />
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE76C;" FontSize="12" Foreground="{StaticResource TextSecondary}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Remap" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="Personalize your experience" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="Chroma_Click">
+                    <DockPanel>
+                        <Ellipse Width="22" Height="22" Margin="3,0,17,0" StrokeThickness="4">
+                            <Ellipse.Stroke>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#FF2D2D" Offset="0" />
+                                    <GradientStop Color="#FFD400" Offset="0.3" />
+                                    <GradientStop Color="#44D62C" Offset="0.55" />
+                                    <GradientStop Color="#2D8CFF" Offset="0.8" />
+                                    <GradientStop Color="#B42DFF" Offset="1" />
+                                </LinearGradientBrush>
+                            </Ellipse.Stroke>
+                        </Ellipse>
+                        <ToggleButton DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}" IsChecked="{Binding ChromaOn, Mode=OneWay}"
+                                      Click="ChromaToggle_Click" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Chroma Effect" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding ChromaDescription}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="GameModeCard_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE7FC;" Width="28" Margin="0,0,14,0" />
+                        <ToggleButton x:Name="GameModeToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding GameMode, Mode=OneWay}" Click="GameMode_Click" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Game Mode" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding GameMode, Converter={StaticResource ActiveDisabled}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="QuickConnect_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE702;" Width="28" Margin="0,0,14,0" />
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Icon}" Text="&#xE76C;" FontSize="12" Foreground="{StaticResource TextSecondary}" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Quick Connect" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding QuickConnectDescription}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="DndCard_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE708;" Width="28" Margin="0,0,14,0" />
+                        <ToggleButton x:Name="DndToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding DoNotDisturb, Mode=OneWay}" Click="Dnd_Click" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Do Not Disturb" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="Block calls while gaming in 2.4 GHz" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="AutoPauseCard_Click">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE769;" Width="28" Margin="0,0,14,0" />
+                        <ToggleButton x:Name="AutoPauseToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding AutoPause, Mode=OneWay}" Click="AutoPause_Click" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Auto Pause / Resume" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="Auto Pause when off ears" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+
+                <Button Style="{StaticResource CardButton}" Click="LowPowerCard_Click"
+                        Visibility="{Binding LowPowerSupported, Converter={StaticResource BoolToVis}}">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xEBA7;" Width="28" Margin="0,0,14,0" />
+                        <ToggleButton x:Name="LowPowerToggle" DockPanel.Dock="Right" Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding LowPower, Mode=OneWay}" Click="LowPower_Click" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource CardTitle}" Text="Low Power Mode" />
+                            <TextBlock Style="{StaticResource CardSubtitle}" Text="{Binding LowPower, Converter={StaticResource OnOff}}" />
+                        </StackPanel>
+                    </DockPanel>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
