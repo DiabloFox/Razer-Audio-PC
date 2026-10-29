@@ -1,0 +1,239 @@
+// THX Spatial Audio v3 IPC schema (VSSrv <-> clients such as Razer's ThxV3Native.dll).
+//
+// Recovered from the serialized FileDescriptorProtos embedded in ThxV3Native_v1.0.41.1.dll
+// (descriptors at RVA 0x28EE40, 0x290610, 0x291390, 0x292040, 0x292F60) for interoperability.
+// Field names and numbers are exact. The "[oneof method]" / "[oneof event]" annotations in the
+// descriptors are written here as oneof blocks. Headphones5 (thx.spatial.Headphones5.Headphones5)
+// is imported by the original but its definition is not embedded. The two fields that use it are
+// declared as `bytes`: same wire type as an embedded message, so this file compiles and stays
+// wire-compatible.
+//
+// Transport (see NARI_ULTIMATE_AUDIO.md §6): ZeroMQ, REQ socket to HKLM\SOFTWARE\THX\Discovery
+// "thx:sa:service" (e.g. tcp://127.0.0.1:49673), SUB socket to "thx:sa:status:publisher".
+// Payload = THXMessage { msg = Any(<one of the messages below>), originator = "<client name>" }.
+// The exact ZeroMQ multipart framing is UNCERTAIN.
+
+// ----- common_definitions.proto -----
+syntax = "proto3";
+package thx.sa;
+
+import "google/protobuf/any.proto";
+
+message THXMessage {
+  optional google.protobuf.Any msg = 1;
+  optional string originator = 2;
+}
+
+message Register {
+  optional uint32 pid = 1;               // client process id
+}
+
+message PresetKey {
+  optional string name = 1;              // e.g. "Game Mode", "Cinema Mode", "Music Mode", "Custom", "ApexLegends_cmm"
+  optional string user = 2;
+  optional bool spatial_enabled = 3;     // presets exist per spatial on/off
+  optional string output_device = 4;
+  optional string hardware_id = 5;       // e.g. "usb\1532\051A"
+}
+
+message RoomKey { optional string name = 1; }
+message EmitterKey { optional string name = 1; }
+
+message Upmix {
+  optional bool upmix_2p0_5p1 = 1;
+  optional double upmix_5p1_5p1p4 = 2;
+  optional double upmix_7p1_7p1p4 = 3;
+}
+
+message State {
+  optional uint32 sequence_number = 1;
+  optional bool spatial_enabled = 2;                 // Stereo / THX Spatial Audio
+  optional string hardware_id = 3;
+  optional string output_device = 4;
+  optional string preset_name = 5;
+  repeated double eq_curve = 6;                      // 31 values (dB), see NARI_ULTIMATE_AUDIO.md §4.2
+  optional double tilt = 7;
+  optional string spatial_processing_mode = 8;
+  optional bool drc_enabled = 9;                     // "Sound Normalization"
+  optional double drc_level = 10;                    //   0..100
+  optional EmitterPositions emitter_positions = 11;
+  optional Room room = 12;
+  optional double bass_boost = 13;                   // "Bass Boost" 0..100
+  optional double dialog_enhancement = 14;           // "Voice Clarity" 0..100
+  optional Upmix upmix = 15;
+  optional bytes Headphones5 = 16;                   // thx.spatial.Headphones5.Headphones5 (not recovered)
+  optional bool bass_boost_enabled = 17;
+  optional bool dialog_enhancement_enabled = 18;
+}
+
+message SetPreset {
+  optional uint32 sequence_number = 1;
+  optional PresetKey key = 3;
+}
+
+message ResetPreset {
+  optional uint32 sequence_number = 1;
+  optional PresetKey key = 3;
+}
+
+message StateChangeResult {
+  optional uint32 status = 1;
+  optional string msg = 2;
+  optional State state = 3;
+}
+
+message Preset {
+  optional string preset_name = 1;
+  optional bool spatial_enabled = 2;
+  optional string hardware_id = 3;
+  optional string output_device = 4;
+  optional string spatial_processing_mode = 5;
+  repeated double eq_curve = 6;
+  optional EmitterPositions emitter_positions = 7;
+  optional Room room = 8;
+  optional Upmix upmix = 9;
+  optional bytes Headphones5 = 10;                   // thx.spatial.Headphones5.Headphones5 (not recovered)
+}
+
+message Room {
+  optional string room_name = 1;
+  repeated double room_dimensions = 2;
+  repeated double room_reflectivity = 3;
+}
+
+message EmitterConfiguration {
+  optional string emitter_configuration_name = 1;
+  optional EmitterPositions emitters = 2;
+}
+
+message EmitterPositions {
+  repeated double L = 1;
+  repeated double R = 2;
+  repeated double C = 3;
+  repeated double Lfe1 = 4;
+  repeated double Rs = 5;
+  repeated double Ls = 6;
+  repeated double Rss = 7;
+  repeated double Lss = 8;
+}
+
+// ----- preset_service.proto (package thx.sa.PresetService) -----
+message PresetServiceRequest {           // original: thx.sa.PresetService.Request
+  oneof method {
+    Add add = 1;
+    RetrieveOne retrieve_one = 2;
+    RetrieveAll retrieve_all = 3;
+    Delete delete = 4;
+  }
+  message Add { optional Preset preset = 1; }
+  message RetrieveOne { optional PresetKey key = 1; }
+  message RetrieveAll { optional PresetKey key = 1; }
+  message Delete { optional PresetKey key = 1; }
+}
+
+message PresetServiceReply {             // original: thx.sa.PresetService.Reply
+  optional string msg = 1;
+  optional uint32 result = 2;
+  oneof method {
+    Add add = 3;
+    RetrieveOne retrieve_one = 4;
+    RetrieveAll retrieve_all = 5;
+    Delete delete = 6;
+  }
+  message Add { optional Preset preset = 1; }
+  message RetrieveOne { optional Preset preset = 1; }
+  message RetrieveAll { repeated string preset_names = 1; }
+  message Delete {}
+}
+
+// ----- room_service.proto (package thx.sa.RoomService) -----
+message RoomServiceRequest {             // original: thx.sa.RoomService.Request
+  oneof method {
+    Add add = 1;
+    RetrieveOne retrieve_one = 2;
+    RetrieveAll retrieve_all = 3;
+    Delete delete = 4;
+  }
+  message Add { optional Room room = 1; }
+  message RetrieveOne { optional RoomKey key = 1; }
+  message RetrieveAll { optional RoomKey key = 1; }
+  message Delete { optional RoomKey key = 1; }
+}
+
+message RoomServiceReply {               // original: thx.sa.RoomService.Reply
+  optional string msg = 1;
+  optional uint32 result = 2;
+  oneof method {
+    Add add = 3;
+    RetrieveOne retrieve_one = 4;
+    RetrieveAll retrieve_all = 5;
+    Delete delete = 6;
+  }
+  message Add { optional Room room = 1; }
+  message RetrieveOne { optional Room room = 1; }
+  message RetrieveAll { repeated string room_names = 1; }
+  message Delete {}
+}
+
+// ----- emitter_service.proto (package thx.sa.EmitterService) -----
+message EmitterServiceRequest {          // original: thx.sa.EmitterService.Request
+  oneof method {
+    Add add = 1;
+    RetrieveOne retrieve_one = 2;
+    RetrieveAll retrieve_all = 3;
+    Delete delete = 4;
+  }
+  message Add { optional EmitterConfiguration emitter_configuration = 1; }
+  message RetrieveOne { optional EmitterKey key = 1; }
+  message RetrieveAll { optional EmitterKey key = 1; }
+  message Delete { optional EmitterKey key = 1; }
+}
+
+message EmitterServiceReply {            // original: thx.sa.EmitterService.Reply
+  optional string msg = 1;
+  optional uint32 result = 2;
+  oneof method {
+    Add add = 3;
+    RetrieveOne retrieve_one = 4;
+    RetrieveAll retrieve_all = 5;
+    Delete delete = 6;
+  }
+  message Add { optional EmitterConfiguration emitter_configuration = 1; }
+  message RetrieveOne { optional EmitterConfiguration emitter_configuration = 1; }
+  message RetrieveAll { repeated string emitter_configuration_names = 1; }
+  message Delete {}
+}
+
+// NOTE: the original declares the six service messages above as
+// thx.sa.<Service>.Request / .Reply in separate packages. The type URLs inside
+// google.protobuf.Any must use those original full names, e.g.
+// "type.googleapis.com/thx.sa.PresetService.Request" and "type.googleapis.com/thx.sa.Register"
+// (the latter is seen verbatim in ThxV3Native.log). Re-split this file into one file per package
+// before generating code if you need those exact names.
+
+// ----- NotificationEvents.proto (package thx.net; published on "thx:sa:status:publisher") -----
+message THXSettingsNotificationEvent {
+  optional uint64 event_code = 1;
+  optional string event_message = 2;
+}
+message THXSettingsChangedEvent {
+  optional THXSettingsNotificationEvent super = 3;
+}
+message THXSettingsErrorEvent {
+  optional THXSettingsNotificationEvent super = 3;
+  optional uint64 error_code = 5;
+}
+message InBandMessage {
+  oneof event { THXSettingsErrorEvent settings_error_event = 6; }
+}
+message OutOfBandMessage {
+  oneof event {
+    THXSettingsNotificationEvent generic_event = 7;
+    THXSettingsChangedEvent settings_changed_event = 8;
+    THXSettingsErrorEvent settings_error_event = 9;
+  }
+}
+// Publisher topics seen in the DLL: "thx:sa:state", "thx:sa:status:settings_changed", "thx:sa:status:error".
+
+// In the original, the thx.net messages above live in package thx.net
+// (full names thx.net.OutOfBandMessage etc.).
