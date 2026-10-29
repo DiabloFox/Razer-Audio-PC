@@ -13,6 +13,8 @@ Every command below is the one that actually applies to T1V2 after walking that 
 Byte notation: `0x93 (-109)` = hex value and the signed Java `byte` literal that appears in the source.
 "UNCERTAIN" marks anything inferred and not proven by the code.
 
+https://rzr.to/ucczgm
+
 ---
 
 ## 1. Transport
